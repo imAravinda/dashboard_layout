@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Scientific theme - Professional blues and teals */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 27%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 27%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 27%;
+
+    --primary: 200 95% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 200 85% 60%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 25% 27%;
+
+    --muted: 210 30% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 185 95% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 31% 91%;
+    --input: 214 31% 91%;
+    --ring: 200 95% 45%;
+
+    /* Scientific dashboard specific tokens */
+    --dashboard-bg: 210 25% 97%;
+    --dashboard-panel: 0 0% 100%;
+    --dashboard-border: 210 20% 90%;
+    --dashboard-drag-hover: 200 95% 45%;
+    --dashboard-grid: 210 15% 93%;
+    
+    /* Chart colors for scientific data */
+    --chart-primary: 200 95% 45%;
+    --chart-secondary: 185 95% 45%;
+    --chart-tertiary: 160 85% 45%;
+    --chart-quaternary: 280 85% 55%;
+    --chart-success: 140 85% 45%;
+    --chart-warning: 45 95% 55%;
+    --chart-error: 0 84% 60%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-dashboard: linear-gradient(180deg, hsl(var(--dashboard-bg)), hsl(var(--background)));
+    
+    /* Shadows */
+    --shadow-panel: 0 4px 20px -2px hsl(var(--primary) / 0.1);
+    --shadow-drag: 0 8px 40px -4px hsl(var(--primary) / 0.3));
+    --shadow-glow: 0 0 20px hsl(var(--primary-glow) / 0.4);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-drag: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 215 25% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 215 25% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 215 25% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 200 95% 55%;
+    --primary-foreground: 215 25% 8%;
+    --primary-glow: 200 85% 70%;
+
+    --secondary: 215 25% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 215 25% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 185 95% 55%;
+    --accent-foreground: 215 25% 8%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 215 25% 18%;
+    --input: 215 25% 18%;
+    --ring: 200 95% 55%;
+
+    /* Dark mode dashboard tokens */
+    --dashboard-bg: 215 25% 6%;
+    --dashboard-panel: 215 25% 10%;
+    --dashboard-border: 215 25% 18%;
+    --dashboard-drag-hover: 200 95% 55%;
+    --dashboard-grid: 215 25% 12%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
