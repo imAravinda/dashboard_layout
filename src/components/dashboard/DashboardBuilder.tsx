@@ -5,19 +5,70 @@ import { ComponentLibrary } from "./ComponentLibrary";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardProvider, useDashboard } from "./DashboardContext";
 import { ConfigProvider } from "./ConfigContext";
+import { checkCollision, findBestPosition, snapToGrid } from "@/utils/collisionDetection";
 
 const DashboardBuilderContent = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [dragPreview, setDragPreview] = useState<{ x: number; y: number; width: number; height: number; hasCollision: boolean } | null>(null);
   const { addWidget, updateWidget, widgets, gridSize } = useDashboard();
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+    setDragPreview(null);
   }, []);
+
+  // Helper function to check for collisions using utility
+  const checkWidgetCollision = useCallback((x: number, y: number, width: number, height: number, excludeId?: string) => {
+    return checkCollision(x, y, width, height, widgets, excludeId);
+  }, [widgets]);
+
+  const handleDragMove = useCallback((event: any) => {
+    if (!activeId || !event.delta) return;
+
+    const canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
+    if (!canvasElement) return;
+
+    const rect = canvasElement.getBoundingClientRect();
+    const activeRect = event.active.rect.current.translated;
+    
+    if (activeRect) {
+      const x = snapToGrid(activeRect.left - rect.left, gridSize);
+      const y = snapToGrid(activeRect.top - rect.top, gridSize);
+      
+      // Determine if this is a new component or existing widget
+      if (event.active.data.current?.type === 'component') {
+        const component = event.active.data.current.component;
+        const hasCollision = checkWidgetCollision(x, y, component.defaultSize.width, component.defaultSize.height);
+        
+        setDragPreview({
+          x: Math.max(0, x),
+          y: Math.max(0, y),
+          width: component.defaultSize.width,
+          height: component.defaultSize.height,
+          hasCollision
+        });
+      } else if (event.active.data.current?.type === 'widget') {
+        const widget = widgets.find(w => w.id === event.active.data.current.widgetId);
+        if (widget) {
+          const hasCollision = checkWidgetCollision(x, y, widget.width, widget.height, widget.id);
+          
+          setDragPreview({
+            x: Math.max(0, x),
+            y: Math.max(0, y),
+            width: widget.width,
+            height: widget.height,
+            hasCollision
+          });
+        }
+      }
+    }
+  }, [activeId, gridSize, checkWidgetCollision, widgets]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over, delta } = event;
     setActiveId(null);
+    setDragPreview(null);
 
     if (!over || over.id !== 'dashboard-canvas') return;
 
@@ -34,14 +85,26 @@ const DashboardBuilderContent = () => {
       // Calculate drop position based on the final mouse position
       const activeRect = active.rect.current.translated;
       if (activeRect) {
-        const x = Math.round((activeRect.left - rect.left) / gridSize) * gridSize;
-        const y = Math.round((activeRect.top - rect.top) / gridSize) * gridSize;
+        const x = snapToGrid(activeRect.left - rect.left, gridSize);
+        const y = snapToGrid(activeRect.top - rect.top, gridSize);
+        
+        // Find the best non-overlapping position
+        const bestPosition = findBestPosition(
+          x, 
+          y, 
+          component.defaultSize.width, 
+          component.defaultSize.height,
+          widgets,
+          rect.width,
+          rect.height,
+          gridSize
+        );
         
         addWidget({
           type: component.id,
           title: component.name,
-          x: Math.max(0, x),
-          y: Math.max(0, y),
+          x: bestPosition.x,
+          y: bestPosition.y,
           width: component.defaultSize.width,
           height: component.defaultSize.height,
           data: component.id.startsWith('custom-') ? 
@@ -57,16 +120,29 @@ const DashboardBuilderContent = () => {
       const widget = widgets.find(w => w.id === widgetId);
       
       if (widget && delta) {
-        const newX = Math.round((widget.x + delta.x) / gridSize) * gridSize;
-        const newY = Math.round((widget.y + delta.y) / gridSize) * gridSize;
+        const newX = snapToGrid(widget.x + delta.x, gridSize);
+        const newY = snapToGrid(widget.y + delta.y, gridSize);
+        
+        // Find the best non-overlapping position
+        const bestPosition = findBestPosition(
+          newX, 
+          newY, 
+          widget.width, 
+          widget.height,
+          widgets,
+          rect.width,
+          rect.height,
+          gridSize,
+          widgetId
+        );
         
         updateWidget(widgetId, {
-          x: Math.max(0, newX),
-          y: Math.max(0, newY),
+          x: bestPosition.x,
+          y: bestPosition.y,
         });
       }
     }
-  }, [addWidget, updateWidget, widgets, gridSize]);
+  }, [addWidget, updateWidget, widgets, gridSize, findBestPosition]);
 
   const generateSampleData = useCallback((type: string) => {
     switch (type) {
@@ -138,6 +214,7 @@ const DashboardBuilderContent = () => {
   return (
     <DndContext
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       collisionDetection={closestCenter}
     >
@@ -156,6 +233,29 @@ const DashboardBuilderContent = () => {
         </div>
       </div>
       
+      {/* Drag Preview Overlay */}
+      {dragPreview && (
+        <div
+          className={`absolute pointer-events-none z-20 border-2 rounded-lg ${
+            dragPreview.hasCollision 
+              ? 'border-red-500 bg-red-500/10' 
+              : 'border-green-500 bg-green-500/10'
+          }`}
+          style={{
+            left: dragPreview.x,
+            top: dragPreview.y,
+            width: dragPreview.width,
+            height: dragPreview.height,
+          }}
+        >
+          <div className={`absolute inset-0 flex items-center justify-center text-xs font-medium ${
+            dragPreview.hasCollision ? 'text-red-600' : 'text-green-600'
+          }`}>
+            {dragPreview.hasCollision ? 'Overlap!' : 'Valid Position'}
+          </div>
+        </div>
+      )}
+
       <DragOverlay>
         {activeId ? (
           <div className="bg-dashboard-panel border border-primary rounded-lg p-4 shadow-xl opacity-90">
